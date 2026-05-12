@@ -28,9 +28,59 @@ body {
 .account-badge {
   background: rgba(255,255,255,0.2);
   border-radius: 12px;
-  padding: 2px 10px;
+  padding: 2px 6px 2px 10px;
   font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
+
+.badge-logout {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.badge-logout:hover { color: white; }
+
+.logged-in-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+}
+
+.connect-bar { display: flex; gap: 6px; flex: 1; }
+
+.btn-connect {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-google-sm { background: #1a73e8; color: white; }
+.btn-microsoft-sm { background: #0078d4; color: white; }
+
+.btn-scan {
+  padding: 6px 14px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-scan:active { background: #ddd; }
 
 .package-list { list-style: none; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 

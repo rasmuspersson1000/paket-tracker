@@ -27,8 +27,21 @@ const CARRIER_NAMES = {
 export function renderAccounts(accounts) {
   const el = document.getElementById('accounts');
   el.innerHTML = accounts.map(a =>
-    `<span class="account-badge">${a.provider === 'google' ? 'Gmail' : 'Outlook'} ✓</span>`
+    `<span class="account-badge">
+      ${a.provider === 'google' ? 'Gmail' : 'Outlook'} ✓
+      <button class="badge-logout" data-provider="${esc(a.provider)}" title="Logga ut">✕</button>
+    </span>`
   ).join('');
+}
+
+export function renderConnectButtons(connectedProviders) {
+  const bar = document.getElementById('connect-bar');
+  const hasGoogle = connectedProviders.includes('google');
+  const hasMs = connectedProviders.includes('microsoft');
+  bar.innerHTML = `
+    ${!hasGoogle ? '<button id="btn-google" class="btn-connect btn-google-sm">+ Gmail</button>' : ''}
+    ${!hasMs ? '<button id="btn-microsoft" class="btn-connect btn-microsoft-sm">+ Outlook</button>' : ''}
+  `;
 }
 
 export function renderPackages(packages) {

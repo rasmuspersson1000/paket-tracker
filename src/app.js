@@ -4,7 +4,7 @@ import { EmailScanner } from './scanner.js';
 import { TrackingDetector } from './detector.js';
 import { StatusFetcher } from './fetcher.js';
 import { PackageStore } from './store.js';
-import { renderAccounts, renderPackages, showLoading, showAuthScreen } from './ui.js';
+import { renderAccounts, renderConnectButtons, renderPackages, showLoading, showAuthScreen } from './ui.js';
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
@@ -111,6 +111,19 @@ async function seedDemoIfEmpty() {
   localStorage.setItem('demo-seeded', '1');
 }
 
+function wireConnectButtons() {
+  const btnGoogle = document.getElementById('btn-google');
+  const btnMs = document.getElementById('btn-microsoft');
+  if (btnGoogle) btnGoogle.onclick = async () => {
+    try { const a = await auth.signInGoogle(); await store.saveAccount(a); await refresh(); }
+    catch (err) { console.error('Google sign-in failed', err); }
+  };
+  if (btnMs) btnMs.onclick = async () => {
+    try { const a = await auth.signInMicrosoft(); await store.saveAccount(a); await refresh(); }
+    catch (err) { console.error('Microsoft sign-in failed', err); }
+  };
+}
+
 async function refresh() {
   const googleAccount = await getValidAccount('google');
   const msAccount = await getValidAccount('microsoft');
@@ -118,13 +131,17 @@ async function refresh() {
 
   if (accounts.length === 0) {
     showAuthScreen(true);
+    document.getElementById('logged-in-bar').classList.add('hidden');
     const cached = await store.getAllPackages();
     renderPackages(cached);
     return;
   }
 
   showAuthScreen(false);
+  document.getElementById('logged-in-bar').classList.remove('hidden');
   renderAccounts(accounts);
+  renderConnectButtons(accounts.map(a => a.provider));
+  wireConnectButtons();
   showLoading(true);
 
   await Promise.allSettled(accounts.map(scanAndUpdate));
@@ -185,24 +202,21 @@ async function main() {
     renderPackages(packages);
   };
 
-  document.getElementById('btn-google').onclick = async () => {
-    try {
-      const account = await auth.signInGoogle();
-      await store.saveAccount(account);
-      await refresh();
-    } catch (err) {
-      console.error('Google sign-in failed', err);
-    }
-  };
+  // Auth screen login buttons (shown when no accounts connected)
+  wireConnectButtons();
 
-  document.getElementById('btn-microsoft').onclick = async () => {
-    try {
-      const account = await auth.signInMicrosoft();
-      await store.saveAccount(account);
-      await refresh();
-    } catch (err) {
-      console.error('Microsoft sign-in failed', err);
-    }
+  // Logout via ✕ on account badges (event delegation)
+  document.getElementById('accounts').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.badge-logout');
+    if (!btn) return;
+    const provider = btn.dataset.provider;
+    await store.saveAccount({ provider, accessToken: null, expiresAt: 0 });
+    await refresh();
+  });
+
+  // Scan button
+  document.getElementById('btn-scan').onclick = async () => {
+    await refresh();
   };
 
   initPullToRefresh(refresh);
