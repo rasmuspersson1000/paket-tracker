@@ -90,6 +90,14 @@ body {
 .loading { padding: 20px; text-align: center; color: #888; font-size: 14px; }
 .empty { padding: 20px; text-align: center; color: #888; font-size: 14px; }
 
+.ptr-indicator {
+  text-align: center;
+  padding: 10px;
+  font-size: 13px;
+  color: #888;
+  background: #f5f5f5;
+}
+
 .manual-form {
   display: flex;
   gap: 8px;

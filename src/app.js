@@ -134,6 +134,33 @@ async function refresh() {
   renderPackages(packages);
 }
 
+function initPullToRefresh(onRefresh) {
+  let startY = 0;
+  let refreshing = false;
+  const indicator = document.getElementById('ptr-indicator');
+
+  document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (refreshing || window.scrollY > 0) return;
+    const dist = e.touches[0].clientY - startY;
+    if (dist > 10) indicator.classList.remove('hidden');
+  }, { passive: true });
+
+  document.addEventListener('touchend', async (e) => {
+    if (refreshing) return;
+    const dist = e.changedTouches[0].clientY - startY;
+    indicator.classList.add('hidden');
+    if (dist > 80 && window.scrollY === 0) {
+      refreshing = true;
+      await onRefresh();
+      refreshing = false;
+    }
+  }, { passive: true });
+}
+
 async function main() {
   await store.open();
   await store.pruneDelivered(14);
@@ -178,6 +205,7 @@ async function main() {
     }
   };
 
+  initPullToRefresh(refresh);
   await refresh();
 }
 
