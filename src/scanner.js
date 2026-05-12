@@ -7,23 +7,34 @@ function decodeBase64Url(str) {
 }
 
 function extractGmailBody(payload) {
-  if (!payload) return '';
-  // Prefer text/plain, fall back to text/html
-  if (payload.mimeType?.startsWith('text/') && payload.body?.data) {
-    try { return decodeBase64Url(payload.body.data); } catch { return ''; }
+  if (!payload) return { text: '', html: '' };
+  if (payload.mimeType === 'text/plain' && payload.body?.data) {
+    try { return { text: decodeBase64Url(payload.body.data), html: '' }; } catch { return { text: '', html: '' }; }
+  }
+  if (payload.mimeType === 'text/html' && payload.body?.data) {
+    try { return { text: '', html: decodeBase64Url(payload.body.data) }; } catch { return { text: '', html: '' }; }
   }
   if (payload.parts) {
-    const plain = payload.parts.find(p => p.mimeType === 'text/plain');
-    if (plain?.body?.data) {
-      try { return decodeBase64Url(plain.body.data); } catch { return ''; }
-    }
-    // Recurse into nested multipart
+    let text = '';
+    let html = '';
     for (const part of payload.parts) {
-      const result = extractGmailBody(part);
-      if (result) return result;
+      const r = extractGmailBody(part);
+      if (r.text) text = text || r.text;
+      if (r.html) html = html || r.html;
     }
+    return { text, html };
   }
-  return '';
+  return { text: '', html: '' };
+}
+
+function extractLinks(html) {
+  const urls = [];
+  const re = /href=["']([^"']+)["']/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    urls.push(m[1]);
+  }
+  return urls;
 }
 
 export class EmailScanner {
@@ -47,8 +58,8 @@ export class EmailScanner {
         const msg = await res.json();
         const headers = msg.payload?.headers ?? [];
         const subject = headers.find(h => h.name === 'Subject')?.value ?? '';
-        const body = extractGmailBody(msg.payload);
-        return { subject, body, source: 'gmail' };
+        const { text, html } = extractGmailBody(msg.payload);
+        return { subject, body: text || html, links: extractLinks(html), source: 'gmail' };
       })
     );
 
@@ -63,10 +74,14 @@ export class EmailScanner {
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.value ?? []).map(msg => ({
-      subject: msg.subject ?? '',
-      body: msg.body?.content ?? '',
-      source: 'outlook',
-    }));
+    return (data.value ?? []).map(msg => {
+      const html = msg.body?.contentType === 'html' ? (msg.body?.content ?? '') : '';
+      return {
+        subject: msg.subject ?? '',
+        body: msg.body?.content ?? '',
+        links: extractLinks(html),
+        source: 'outlook',
+      };
+    });
   }
 }

@@ -26,29 +26,39 @@ async function getValidAccount(provider) {
   return account;
 }
 
+async function savePackage(trackingNumber, carrier, emailSubject, source) {
+  const id = `${carrier}-${trackingNumber}`;
+  const statusData = await fetcher.fetchStatus(carrier, trackingNumber);
+  await store.upsertPackage({
+    id,
+    trackingNumber,
+    carrier,
+    emailSubject,
+    source,
+    detectedAt: new Date().toISOString(),
+    status: statusData.status,
+    statusText: statusData.statusText,
+    estimatedDelivery: statusData.estimatedDelivery ?? null,
+    trackingUrl: statusData.trackingUrl ?? null,
+    lastUpdated: new Date().toISOString(),
+  });
+}
+
 async function scanAndUpdate(account) {
   const emails = account.provider === 'google'
     ? await scanner.scanGmail(account.accessToken)
     : await scanner.scanOutlook(account.accessToken);
 
   for (const email of emails) {
-    const hits = detector.detect(email.subject + ' ' + email.body);
+    const textHits = detector.detect(email.subject + ' ' + email.body);
+    const urlHits = detector.detectFromUrls(email.links ?? []);
+    const seen = new Set();
+    const hits = [];
+    for (const h of [...textHits, ...urlHits]) {
+      if (!seen.has(h.trackingNumber)) { seen.add(h.trackingNumber); hits.push(h); }
+    }
     for (const { trackingNumber, carrier } of hits) {
-      const id = `${carrier}-${trackingNumber}`;
-      const statusData = await fetcher.fetchStatus(carrier, trackingNumber);
-      await store.upsertPackage({
-        id,
-        trackingNumber,
-        carrier,
-        emailSubject: email.subject,
-        source: email.source,
-        detectedAt: new Date().toISOString(),
-        status: statusData.status,
-        statusText: statusData.statusText,
-        estimatedDelivery: statusData.estimatedDelivery ?? null,
-        trackingUrl: statusData.trackingUrl ?? null,
-        lastUpdated: new Date().toISOString(),
-      });
+      await savePackage(trackingNumber, carrier, email.subject, email.source);
     }
   }
 }
@@ -79,6 +89,25 @@ async function refresh() {
 async function main() {
   await store.open();
   await store.pruneDelivered(14);
+
+  document.getElementById('form-manual').onsubmit = async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('input-tracking');
+    const raw = input.value.trim();
+    if (!raw) return;
+    const hits = detector.detect(raw);
+    if (hits.length === 0) {
+      alert('Tracking-numret kändes inte igen. Kontrollera att det är korrekt.');
+      return;
+    }
+    const { trackingNumber, carrier } = hits[0];
+    input.value = '';
+    showLoading(true);
+    await savePackage(trackingNumber, carrier, 'Manuellt tillagt', 'manual');
+    showLoading(false);
+    const packages = await store.getAllPackages();
+    renderPackages(packages);
+  };
 
   document.getElementById('btn-google').onclick = async () => {
     try {
