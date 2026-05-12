@@ -2,6 +2,7 @@
 const CARRIERS = [
   { carrier: 'postnord', pattern: /\b[A-Za-z]{2}\d{9}[A-Za-z]{2}\b/g },
   { carrier: 'ups',      pattern: /\b1Z[A-Z0-9]{16}\b/g },
+  { carrier: 'airmee',   pattern: /\bAM\d{9}\b/g },
   { carrier: 'airmee',   pattern: /\bAIR-[A-Z0-9]{7,}\b/g },
   { carrier: 'fedex',    pattern: /\b(\d{15}|\d{12}|\d{20})\b/g },
   { carrier: 'dhl',      pattern: /\b\d{10,11}\b/g },
