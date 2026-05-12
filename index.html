@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a73e8">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/styles/app.css">
+  <title>Paket Tracker</title>
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <h1>📦 Mina Paket</h1>
+      <div id="accounts" class="accounts"></div>
+    </header>
+    <main id="main">
+      <div id="auth-screen" class="auth-screen hidden">
+        <p>Logga in för att se dina paket</p>
+        <button id="btn-google" class="btn-google">Logga in med Gmail</button>
+        <button id="btn-microsoft" class="btn-microsoft">Logga in med Outlook</button>
+      </div>
+      <div id="loading" class="loading hidden">Skannar inkorg...</div>
+      <ul id="package-list" class="package-list"></ul>
+      <p id="empty" class="empty hidden">Inga aktiva paket hittades.</p>
+    </main>
+  </div>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
