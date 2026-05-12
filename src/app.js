@@ -63,6 +63,54 @@ async function scanAndUpdate(account) {
   }
 }
 
+const DEMO_PACKAGES = [
+  {
+    id: 'demo-postnord-SE123456789SE',
+    trackingNumber: 'SE123456789SE',
+    carrier: 'postnord',
+    emailSubject: 'Din beställning från Elgiganten har skickats',
+    source: 'demo',
+    detectedAt: new Date().toISOString(),
+    status: 'in_transit',
+    statusText: 'På väg till utlämningsställe',
+    estimatedDelivery: new Date(Date.now() + 2 * 86400000).toISOString(),
+    trackingUrl: 'https://tracking.postnord.com/SE123456789SE',
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    id: 'demo-dhl-1234567890',
+    trackingNumber: '1234567890',
+    carrier: 'dhl',
+    emailSubject: 'Paket på väg – IKEA order #8823411',
+    source: 'demo',
+    detectedAt: new Date().toISOString(),
+    status: 'out_for_delivery',
+    statusText: 'Levereras idag',
+    estimatedDelivery: new Date().toISOString(),
+    trackingUrl: 'https://www.dhl.com/se-sv/home/tracking.html?tracking-id=1234567890',
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    id: 'demo-ups-1Z999AA10123456784',
+    trackingNumber: '1Z999AA10123456784',
+    carrier: 'ups',
+    emailSubject: 'Your Amazon order has been shipped',
+    source: 'demo',
+    detectedAt: new Date().toISOString(),
+    status: 'delivered',
+    statusText: 'Levererat',
+    estimatedDelivery: null,
+    trackingUrl: 'https://www.ups.com/track?tracknum=1Z999AA10123456784',
+    lastUpdated: new Date().toISOString(),
+  },
+];
+
+async function seedDemoIfEmpty() {
+  if (localStorage.getItem('demo-seeded')) return;
+  for (const pkg of DEMO_PACKAGES) await store.upsertPackage(pkg);
+  localStorage.setItem('demo-seeded', '1');
+}
+
 async function refresh() {
   const googleAccount = await getValidAccount('google');
   const msAccount = await getValidAccount('microsoft');
@@ -89,6 +137,7 @@ async function refresh() {
 async function main() {
   await store.open();
   await store.pruneDelivered(14);
+  await seedDemoIfEmpty();
 
   document.getElementById('form-manual').onsubmit = async (e) => {
     e.preventDefault();
