@@ -1,4 +1,4 @@
-const SEARCH_QUERY = 'tracking OR spårning OR shipment OR försändelse OR leverans OR "order shipped"';
+const SEARCH_QUERY = 'tracking OR spårning OR spårningsnummer OR shipment OR försändelse OR leverans OR fraktbolag OR fraktsedel OR "order shipped" OR skickad';
 
 function decodeBase64Url(str) {
   const binary = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
