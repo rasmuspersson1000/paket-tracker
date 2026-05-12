@@ -10,19 +10,18 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
 }
 
-const auth = new AuthManager(CONFIG);
+const auth = new AuthManager();
 const scanner = new EmailScanner();
 const detector = new TrackingDetector();
 const fetcher = new StatusFetcher(CONFIG);
 const store = new PackageStore();
 
 async function getValidAccount(provider) {
-  let account = await store.getAccount(provider);
+  const account = await store.getAccount(provider);
   if (!account) return null;
   if (auth.isExpired(account)) {
-    account = await auth.refreshAccessToken(account);
-    if (!account) { await store.saveAccount({ provider, accessToken: null, refreshToken: null, expiresAt: 0 }); return null; }
-    await store.saveAccount(account);
+    await store.saveAccount({ provider, accessToken: null, expiresAt: 0 });
+    return null;
   }
   return account;
 }
@@ -54,24 +53,7 @@ async function scanAndUpdate(account) {
   }
 }
 
-async function main() {
-  await store.open();
-  await store.pruneDelivered(14);
-
-  // Handle OAuth callback
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const state = params.get('state');
-  if (code) {
-    window.history.replaceState({}, '', '/');
-    const account = await auth.handleCallback(code, state);
-    if (account) await store.saveAccount(account);
-  }
-
-  // Wire up login buttons
-  document.getElementById('btn-google').onclick = () => auth.startOAuth('google');
-  document.getElementById('btn-microsoft').onclick = () => auth.startOAuth('microsoft');
-
+async function refresh() {
   const googleAccount = await getValidAccount('google');
   const msAccount = await getValidAccount('microsoft');
   const accounts = [googleAccount, msAccount].filter(Boolean);
@@ -92,6 +74,33 @@ async function main() {
   showLoading(false);
   const packages = await store.getAllPackages();
   renderPackages(packages);
+}
+
+async function main() {
+  await store.open();
+  await store.pruneDelivered(14);
+
+  document.getElementById('btn-google').onclick = async () => {
+    try {
+      const account = await auth.signInGoogle();
+      await store.saveAccount(account);
+      await refresh();
+    } catch (err) {
+      console.error('Google sign-in failed', err);
+    }
+  };
+
+  document.getElementById('btn-microsoft').onclick = async () => {
+    try {
+      const account = await auth.signInMicrosoft();
+      await store.saveAccount(account);
+      await refresh();
+    } catch (err) {
+      console.error('Microsoft sign-in failed', err);
+    }
+  };
+
+  await refresh();
 }
 
 main().catch(err => {
