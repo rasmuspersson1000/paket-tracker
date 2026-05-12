@@ -44,7 +44,10 @@ export class EmailScanner {
     const listRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!listRes.ok) return [];
+    if (!listRes.ok) {
+      const err = await listRes.text().catch(() => listRes.status);
+      throw new Error(`Gmail API ${listRes.status}: ${err}`);
+    }
     const list = await listRes.json();
     if (!list.messages?.length) return [];
 
@@ -72,7 +75,10 @@ export class EmailScanner {
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      const err = await res.text().catch(() => res.status);
+      throw new Error(`Outlook API ${res.status}: ${err}`);
+    }
     const data = await res.json();
     return (data.value ?? []).map(msg => {
       const html = msg.body?.contentType === 'html' ? (msg.body?.content ?? '') : '';

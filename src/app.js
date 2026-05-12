@@ -4,7 +4,7 @@ import { EmailScanner } from './scanner.js';
 import { TrackingDetector } from './detector.js';
 import { StatusFetcher } from './fetcher.js';
 import { PackageStore } from './store.js';
-import { renderAccounts, renderConnectButtons, renderPackages, showLoading, showAuthScreen } from './ui.js';
+import { renderAccounts, renderConnectButtons, renderPackages, showLoading, showAuthScreen, showScanResult } from './ui.js';
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
@@ -49,6 +49,7 @@ async function scanAndUpdate(account) {
     ? await scanner.scanGmail(account.accessToken)
     : await scanner.scanOutlook(account.accessToken);
 
+  let found = 0;
   for (const email of emails) {
     const textHits = detector.detect(email.subject + ' ' + email.body);
     const urlHits = detector.detectFromUrls(email.links ?? []);
@@ -59,8 +60,10 @@ async function scanAndUpdate(account) {
     }
     for (const { trackingNumber, carrier } of hits) {
       await savePackage(trackingNumber, carrier, email.subject, email.source);
+      found++;
     }
   }
+  return { emailCount: emails.length, found };
 }
 
 const DEMO_PACKAGES = [
@@ -144,9 +147,20 @@ async function refresh() {
   wireConnectButtons();
   showLoading(true);
 
-  await Promise.allSettled(accounts.map(scanAndUpdate));
+  const results = await Promise.allSettled(accounts.map(scanAndUpdate));
+  const errors = [];
+  let totalEmails = 0, totalFound = 0;
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      totalEmails += r.value.emailCount;
+      totalFound += r.value.found;
+    } else {
+      errors.push(r.reason?.message ?? 'Okänt fel');
+    }
+  }
 
   showLoading(false);
+  showScanResult(totalEmails, totalFound, errors);
   const packages = await store.getAllPackages();
   renderPackages(packages);
 }

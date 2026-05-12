@@ -85,3 +85,16 @@ export function showLoading(visible) {
 export function showAuthScreen(visible) {
   document.getElementById('auth-screen').classList.toggle('hidden', !visible);
 }
+
+export function showScanResult(emailCount, found, errors) {
+  const el = document.getElementById('scan-result');
+  if (errors.length > 0) {
+    el.textContent = `Fel vid skanning: ${errors.join(', ')}`;
+    el.className = 'scan-result scan-error';
+  } else {
+    el.textContent = `Skannade ${emailCount} mejl · hittade ${found} spårningsnummer`;
+    el.className = 'scan-result';
+  }
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 6000);
+}
