@@ -99,6 +99,23 @@ body {
 
 .package-item:active { background: #f0f0f0; }
 
+.package-list li { position: relative; display: flex; align-items: center; }
+.package-list .package-item { flex: 1; }
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 14px;
+  padding: 0 10px;
+  cursor: pointer;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.btn-delete:hover { color: #e53935; }
+
 .package-info .carrier { font-size: 11px; color: #888; margin-bottom: 2px; }
 .package-info .subject { font-size: 14px; font-weight: 500; }
 

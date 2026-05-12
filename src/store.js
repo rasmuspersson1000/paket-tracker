@@ -47,6 +47,10 @@ export class PackageStore {
     return this._tx('accounts', 'readonly', s => s.get(provider));
   }
 
+  deletePackage(id) {
+    return this._tx('packages', 'readwrite', s => s.delete(id));
+  }
+
   async pruneDelivered(olderThanDays) {
     const all = await this.getAllPackages();
     const cutoff = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;

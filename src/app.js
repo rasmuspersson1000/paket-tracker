@@ -214,6 +214,16 @@ async function main() {
     await refresh();
   });
 
+  // Delete package (event delegation on list)
+  document.getElementById('package-list').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-delete');
+    if (!btn) return;
+    e.preventDefault();
+    await store.deletePackage(btn.dataset.id);
+    const packages = await store.getAllPackages();
+    renderPackages(packages);
+  });
+
   // Scan button
   document.getElementById('btn-scan').onclick = async () => {
     await refresh();

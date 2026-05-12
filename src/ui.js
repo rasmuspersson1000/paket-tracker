@@ -73,6 +73,7 @@ export function renderPackages(packages) {
           </div>
           <span class="status-badge status-${statusClass}">${label}</span>
         </a>
+        <button class="btn-delete" data-id="${esc(pkg.id)}" title="Ta bort">✕</button>
       </li>`;
   }).join('');
 }

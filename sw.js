@@ -1,4 +1,4 @@
-const CACHE = 'paket-tracker-v2';
+const CACHE = 'paket-tracker-v3';
 const SHELL = ['/', '/index.html', '/styles/app.css', '/src/app.js',
   '/src/auth.js', '/src/scanner.js', '/src/detector.js',
   '/src/fetcher.js', '/src/store.js', '/src/ui.js', '/config.js'];
